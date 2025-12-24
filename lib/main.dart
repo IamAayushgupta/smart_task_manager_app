@@ -18,6 +18,28 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: Colors.white,
       ),
+      builder: (context, child) {
+        return Stack(
+          children: [
+            // Background Image (Visible only on screens > 500px width)
+            if (MediaQuery.of(context).size.width > 00)
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/images.jpeg',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            
+            // Constrained App Content
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: child,
+              ),
+            ),
+          ],
+        );
+      },
       home: const DashboardScreen(),
     );
   }
