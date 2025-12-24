@@ -49,7 +49,7 @@ Example:
 }
 ```
 
-Optional ML Enhancement (Local)
+## Optional ML Enhancement (Local)
 
 An optional LLM-based intent extraction service is implemented using Ollama (Mistral).
 
@@ -64,21 +64,21 @@ Architecture supports seamless future ML deployment
 Production is never blocked by ML availability.
 
 
-📦 API Endpoints
+## 📦 API Endpoints
 POST   /api/tasks
 GET    /api/tasks
 GET    /api/tasks/:id
 PATCH  /api/tasks/:id
 DELETE /api/tasks/:id
 
-🧪 Example Request
+## 🧪 Example Request
 {
   "title": "Schedule meeting",
   "description": "Urgent meeting with team today about budget",
   "assigned_to": "Aayush"
 }
 
-🗂️ Project Structure
+## 🗂️ Project Structure
 src/
  ├── controllers/
  ├── services/
@@ -87,12 +87,12 @@ src/
  ├── config/
  └── server.js
 
-🔐 Environment Variables
+## 🔐 Environment Variables
 SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 INTENT_ML_URL=http://127.0.0.1:8001   # optional
 
-▶️ Run Locally
+## ▶️ Run Locally
 npm install
 npm run dev
 
