@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         return Stack(
           children: [
             // Background Image (Visible only on screens > 500px width)
-            if (MediaQuery.of(context).size.width > 00)
+            if (MediaQuery.of(context).size.width > 500)
               Positioned.fill(
                 child: Image.asset(
                   'assets/images.jpeg',
