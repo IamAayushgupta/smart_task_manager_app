@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'utils/device_id.dart';
 
 import 'TaskCard.dart';
 import 'config.dart';
@@ -17,6 +19,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
   List tasks = [];
   bool loading = true;
+  String? deviceId;
 
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
@@ -24,16 +27,32 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   void initState() {
     super.initState();
-    fetchTasks();
+    _initializeDeviceId().then((_) => fetchTasks());
 
     _controller = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 700));
     _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
   }
 
+  Future<void> _initializeDeviceId() async {
+    deviceId = await DeviceIdManager.getDeviceId();
+    print(deviceId);
+  }
+
+  Map<String, String> get _headers {
+    final headers = {'Content-Type': 'application/json'};
+    if (deviceId != null) {
+      headers['X-DEVICE-ID'] = deviceId!;
+    }
+    return headers;
+  }
+
   Future<void> fetchTasks() async {
     try {
-      final response = await http.get(Uri.parse('$BASE_URL/api/tasks'));
+      final response = await http.get(
+        Uri.parse('$BASE_URL/api/tasks'),
+        headers: _headers,
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -57,10 +76,18 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> createTaskFromParagraph(String paragraph) async {
+    setState(() {
+      loading = true;
+    });
     try {
+      final deviceId = await DeviceIdManager.getDeviceId(); // ✅ GET DEVICE ID
+
       final response = await http.post(
         Uri.parse('$BASE_URL/api/tasks'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'X-DEVICE-ID': deviceId, // ✅ REQUIRED
+        },
         body: json.encode({
           "title": "Auto-generated task",
           "description": paragraph,
@@ -70,9 +97,18 @@ class _DashboardScreenState extends State<DashboardScreen>
       if (response.statusCode == 201 || response.statusCode == 200) {
         fetchTasks();
       } else {
+        setState(() {
+          loading = false;
+        });
+        print('Status: ${response.statusCode}');
+        print('Body: ${response.body}');
         throw Exception('Failed to create task');
       }
     } catch (e) {
+      setState(() {
+        loading = false;
+      });
+      print('Error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to create task')),
@@ -82,15 +118,27 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> deleteTask(String id) async {
+    setState(() {
+      loading = true;
+    });
     try {
-      final response = await http.delete(Uri.parse('$BASE_URL/api/tasks/$id'));
+      final response = await http.delete(
+        Uri.parse('$BASE_URL/api/tasks/$id'),
+        headers: _headers,
+      );
 
       if (response.statusCode == 200) {
         fetchTasks();
       } else {
+        setState(() {
+          loading = false;
+        });
         throw Exception('Failed to delete task');
       }
     } catch (e) {
+      setState(() {
+        loading = false;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to delete task')),
@@ -100,19 +148,31 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Future<void> updateTask(String id, Map<String, dynamic> data) async {
+    setState(() {
+      loading = true;
+    });
     try {
       final response = await http.patch(
         Uri.parse('$BASE_URL/api/tasks/$id'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers,
         body: json.encode(data),
       );
 
       if (response.statusCode == 200) {
         fetchTasks();
       } else {
+        setState(() {
+          loading = false;
+        });
+        print(response.statusCode);
+        print(response.body);
         throw Exception('Failed to update task');
       }
     } catch (e) {
+      setState(() {
+        loading = false;
+      });
+      print(e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to update task')),
@@ -132,7 +192,12 @@ class _DashboardScreenState extends State<DashboardScreen>
         onPressed: () => showTaskForm(),
       ),
       body: loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: LoadingAnimationWidget.threeRotatingDots(
+                color: Colors.teal,
+                size: 50,
+              ),
+            )
           : tasks.isEmpty
           ? Center(
         child: Column(
